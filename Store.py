@@ -1,13 +1,17 @@
 from threading import Thread
 import pymongo
+from Settings import Settings
 
 
 # 存储到Mongodb中
 class Store(Thread):
-    def __init__(self, url_queue, product_queue, *args, **kwargs):
-        super(Store, self).__init__(*args, **kwargs)
+    def __init__(self, url_queue, product_queue):
+        super(Store, self).__init__()
         self.url_queue = url_queue
         self.product_queue = product_queue
+        self.mongo_uri = Settings.MONGO_URI
+        self.mongo_db = Settings.MONGO_DB
+        self.mongo_collections = Settings.MONGO_COLLECTIONS
 
     def run(self):
         while True:
@@ -22,10 +26,7 @@ class Store(Thread):
         collections.insert_one(product)
 
     def connect_db(self):
-        client = pymongo.MongoClient("127.0.0.1", port=27017)
-        # 定义数据库名称为：JingDong_Products
-        db = client.JingDong_Products
-        # 定义数据集合的名称为：。。。
-        collections = db.camera
-
+        client = pymongo.MongoClient(self.mongo_uri)
+        db = client[self.mongo_db]
+        collections = db[self.mongo_collections]
         return collections

@@ -15,3 +15,10 @@ class Settings:
 
     # 索引(表示：前INDEX页商品)
     INDEX = 10
+
+    # 数据库URI
+    MONGO_URI = 'mongodb://127.0.0.1:27017'
+    # 数据库名称
+    MONGO_DB = 'JingDong_Products'
+    # 数据库的集合名称
+    MONGO_COLLECTIONS = 'cameras'
