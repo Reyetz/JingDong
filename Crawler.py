@@ -1,5 +1,6 @@
-from threading import Thread
+import threading
 import requests
+from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 from bs4 import BeautifulSoup
 import re
@@ -47,23 +48,27 @@ def parse_index_page(html):
         yield product_url
 
 
-class Crawler(Thread):
+class Crawler(threading.Thread):
 
     def __init__(self, url_queue, product_queue):
         super(Crawler, self).__init__()
+        # 商品的url队列
         self.url_queue = url_queue
+        # 商品的详情队列
         self.product_queue = product_queue
 
     def run(self):
         while True:
+            # 当商品url队列为空时，没有需解析的商品，退出循环
             if self.url_queue.empty():
                 break
+            # 调用解析商品的函数
             self.parse_product_page()
 
     # 请求商品详情页
     def get_product_page(self, url):
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=5)
             if response.status_code == 200:
                 return response.text
             else:
@@ -79,12 +84,19 @@ class Crawler(Thread):
         if html:
             soup = BeautifulSoup(html, 'lxml')
             div = soup.find('div', class_="p-parameter")
+            image_div = soup.find('div', class_="spec-items")
             if div:
                 lis = div.find_all('li')
                 product = {}
+                images = []
                 for li in lis:
                     content = li.get_text().strip().split('：')
                     product[content[0]] = content[1]
+                image_lis = image_div.find_all('img')
+                for li in image_lis:
+                    image = 'https:' + li["src"]
+                    images.append(image)
+                product['图像'] = images
                 price = self.get_price(sku)
                 product['价格'] = price
                 self.product_queue.put(product)
@@ -101,7 +113,12 @@ class Crawler(Thread):
             'cat': '670,671,1105'
         }
         try:
-            response = requests.get(url=price_base_url, headers=headers, params=price_url_data)
+            s = requests.Session()
+            # 重试次数为3
+            s.mount('http://', HTTPAdapter(max_retries=3))
+            s.mount('https://', HTTPAdapter(max_retries=3))
+            # 超时时间为5s
+            response = s.get(url=price_base_url, headers=headers, params=price_url_data, timeout=5)
             if response.status_code == 200:
                 try:
                     price = re.findall(r'"wMaprice":(\d+.\d+)', response.text, re.S)[-1]
@@ -112,12 +129,13 @@ class Crawler(Thread):
             else:
                 return None
         except RequestException:
-            print('请求商品价格页失败！')
+            print('商品id：'+sku+'价格获取失败！')
 
 
 def main():
     url_queue = Queue()
     product_queue = Queue()
+    # 线程队列
     thread_list1 = []
     thread_list2 = []
     index = Settings.INDEX + 1

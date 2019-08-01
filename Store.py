@@ -1,10 +1,10 @@
-from threading import Thread
+import threading
 import pymongo
 from Settings import Settings
 
 
 # 存储到Mongodb中
-class Store(Thread):
+class Store(threading.Thread):
     def __init__(self, url_queue, product_queue):
         super(Store, self).__init__()
         self.url_queue = url_queue
