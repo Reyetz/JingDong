@@ -9,6 +9,7 @@ from queue import Queue
 import time
 from Store import Store
 from Settings import Settings
+from Queuetolist import Queuetolist
 
 
 headers = {
@@ -142,8 +143,10 @@ def main():
     # 获取前INDEX页商品的所有url，放入url队列中
     for i in range(1, index):
         for x in [url for url in get_index_page(i)]:
-            print('获取到：', x)
-            url_queue.put(x)
+            if x:
+                print('获取到：', x)
+                url_queue.put(x)
+        print('#'*30)
     print('所有商品url获取完毕')
     # 多线程解析
     for x in range(10):
@@ -154,8 +157,14 @@ def main():
         i.join()
     print('开始存储。。。。。。')
     # 多线程存储
+    # for x in range(10):
+    #     s = Store(url_queue, product_queue)
+    #     s.start()
+    #     thread_list2.append(s)
+    # for i in thread_list2:
+    #     i.join()
     for x in range(10):
-        s = Store(url_queue, product_queue)
+        s = Queuetolist(url_queue, product_queue)
         s.start()
         thread_list2.append(s)
     for i in thread_list2:

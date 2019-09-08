@@ -4,6 +4,7 @@ from Settings import Settings
 
 
 # 存储到Mongodb中
+# 此类是将数据一条一条地从队列取出再一条条地存入数据库
 class Store(threading.Thread):
     def __init__(self, url_queue, product_queue):
         super(Store, self).__init__()
