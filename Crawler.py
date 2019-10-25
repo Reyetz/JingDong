@@ -111,7 +111,7 @@ class Crawler(threading.Thread):
             'methods': 'accessories',
             'p': '103003',
             'sku': sku,
-            'cat': '670,671,1105'
+            'cat': Settings.CAT
         }
         try:
             s = requests.Session()
